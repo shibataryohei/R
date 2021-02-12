@@ -1,0 +1,155 @@
+---
+title: "omu"
+output: html_document
+---
+
+# {omu}とは
+
+```r
+install.packages("omu")
+library(omu)
+```
+omuはメタボロミクスデータセットの迅速な解析と直感的なグラフ作成を可能にするRパッケージです。統計解析はもちろんできますが、データセット内の代謝物に代謝物クラス (炭水化物、脂質など) を割り当て、関連する機能orthologyや遺伝子名をKEGGデータベースから収集することができます。
+
+# データセット
+```r
+data("c57_nos2KO_mouse_countDF") # 668 metabolites
+data("c57_nos2KO_mouse_metadata")
+```
+
+`c57_nos2KO_mouse_countDF`: c57B6Jマウスの野生型とnos2遺伝子KOを用いた実験から収集した、糞便サンプルのメタボロミクス データセット。の例とメタデータ ファイルが含まれている。行の値はMetabolite、 列には代謝物名、 KEGG cpd番号 (compound)、Sample 列には数値のカウントが含まれている。`data.frame`のクラスしか受けえ付けなさそう。
+ 
+
+# 代謝物の階層型クラスデータを割り当てる
+`c57_nos2KO_mouse_countDF`には代謝物名の他にKEGG compoundが割り当てられているため、このIDを元に代謝物の階層型クラスデータを割り当てることができる。それが`assign_hierarchy()`。
+
+```r
+assign_hierarchy(count_data = c57_nos2KO_mouse_countDF,
+                 keep_unknowns = TRUE,
+                 identifier = "KEGG") -> DF 
+
+# kable(DF[1:5,c(1:2,32:36)])
+```
+
+|Metabolite         |KEGG   |Class         |Subclass_1      |Subclass_2     |Subclass_3 |Subclass_4 |
+|:------------------|:------|:-------------|:---------------|:--------------|:----------|:----------|
+|xylulose_NIST      |C00312 |Carbohydrates |Monosaccharides |Ketoses        |none       |none       |
+|xylose             |C00181 |Carbohydrates |Monosaccharides |Aldoses        |none       |none       |
+|xylonolactone_NIST |C02266 |Carbohydrates |Lactones        |none           |none       |none       |
+|xylonic_acid       |C00502 |Carbohydrates |Monosaccharides |Sugar acids    |none       |none       |
+|xylitol            |C00379 |Carbohydrates |Monosaccharides |Sugar alcohols |none       |none       |
+
+それぞれのmetaboliteにKEGGに一致したClass、Subclass...が割り当てられているのがわかる。 
+ 
+# 単変量解析
+`T.test`と`ANOVA`がdefaultで使用できるらしい。後の計算に必要なので、`T.test`だけここでやっておく。詳細は[tutorial](https://cran.r-project.org/web/packages/omu/vignettes/Omu_vignette.html)参照。
+
+```r
+ omu_summary(count_data = DF,
+             metadata = c57_nos2KO_mouse_metadata,
+             numerator = "Strep",
+             denominator = "Mock",
+             response_variable = "Metabolite",
+             Factor = "Treatment",
+             log_transform = TRUE,
+             p_adjust = "BH") -> DF_stats
+
+factor(paste0(c57_nos2KO_mouse_metadata$Background,
+              c57_nos2KO_mouse_metadata$Treatment)) -> c57_nos2KO_mouse_metadata$Grouped
+```
+
+
+# 機能的orthologyと遺伝子データの収集
+## Metaboliteに対応するKEGG orthologyを取得する
+
+`KEGG_gather()`を使用します。`{KEGGREST}`パッケージの`keggGet()`を使用してKEGG APIからデータを取得し、入力データフレームの新しいカラムとしてより読みやすい形式に整えてくれるます。
+
+```r
+# dplyrはclassが変わってしまうため使えない
+# Organic acidでpadjが0.05以下でfiltering
+DF_stats_sub <- subset(DF_stats, Class=="Organic acids")
+DF_stats_sub <- DF_stats_sub[which(DF_stats_sub[,"padj"] <= 0.05),]
+
+KEGG_gather(DF_stats_sub) -> DF_stats_sub_KO
+# kable(DF_stats_sub_KO[1:5, 1:4])
+```
+
+`KEGG_gather()`の前後で何が変わっているかというと、
+
+|KO                                                          |KO_Number |Rxn    |Metabolite                 |
+|:-----------------------------------------------------------|:---------|:------|:--------------------------|
+|2-hydroxyglutarate dehydrogenase [EC:1.1.99.2]              |K00109    |R09279 |4_hydroxybutyric_acid      |
+|glutaconate CoA-transferase, subunit A [EC:2.8.3.12]        |K01039    |R09281 |4_hydroxybutyric_acid      |
+|glutaconate CoA-transferase, subunit B [EC:2.8.3.12]        |K01040    |R09281 |4_hydroxybutyric_acid      |
+|3-(3-hydroxy-phenyl)propionate hydroxylase [EC:1.14.13.127] |K05712    |R02516 |4_hydroxyphenylacetic_acid |
+|4-hydroxybutyrate dehydrogenase [EC:1.1.1.61]               |K00043    |R03806 |alpha_ketoglutarate        |
+
+とMetabiliteの前にKO (KEGG ORTHOLOGY) が割り当てられているのがわかる。ちなみに`Rxn` は`KEGG Reaction`のIDなのだと思います。
+
+## KEGG orthologyの階層的クラスデーターを取得する
+さらに`assign_hierarchy()`で`identifier = "KO_Number"`にすることで、KEGG orthologyのclass、subclass...を取得することも可能。
+
+```r
+assign_hierarchy(count_data = DF_stats_sub_KO,
+                 keep_unknowns = TRUE,
+                 identifier = "KO_Number") -> DF_stats_sub_KO
+
+# 列名にKOが含まれる列だけを抽出する
+# kable(DF_stats_sub_KO[1:5, grepl("KO",colnames(DF_stats_sub_KO))])
+```
+
+|KO                                                          |KO_Number |KO_Class   |KO_Subclass_1           |KO_Subclass_2                                          |
+|:-----------------------------------------------------------|:---------|:----------|:-----------------------|:------------------------------------------------------|
+|2-hydroxyglutarate dehydrogenase [EC:1.1.99.2]              |K00109    |Metabolism |Carbohydrate metabolism |00650 Butanoate metabolism [PATH:ko00650]              |
+|glutaconate CoA-transferase, subunit A [EC:2.8.3.12]        |K01039    |Metabolism |Carbohydrate metabolism |00650 Butanoate metabolism [PATH:ko00650]              |
+|glutaconate CoA-transferase, subunit B [EC:2.8.3.12]        |K01040    |Metabolism |Carbohydrate metabolism |00650 Butanoate metabolism [PATH:ko00650]              |
+|3-(3-hydroxy-phenyl)propionate hydroxylase [EC:1.14.13.127] |K05712    |Metabolism |Overview                |01220 Degradation of aromatic compounds [PATH:ko01220] |
+|4-hydroxybutyrate dehydrogenase [EC:1.1.1.61]               |K00043    |Metabolism |Overview                |01200 Carbon metabolism [PATH:ko01200]                 |
+
+# KEGG orthology IDからそれぞれの生物での遺伝子を取得する
+ちょっと挙動がわからないのですが、これにも`KEGG_gather()`を使います。列名に`Metabolite`しかないときはKOを取得するように働き、`KO_Number` (恐らく文字列の完全一致が必要) がある場合は、それぞれの生物での対応遺伝子を取得するのでしょうか？計算はかなり重いです。
+
+```r
+# KEGG_gatherが重いのでfilteringして計算量を軽くしておく
+DF_stats_sub_KO <- 
+  subset(DF_stats_sub_KO,
+         KO_Class=="Metabolism")
+
+# 重い
+DF_genes <-
+  KEGG_gather(count_data = DF_stats_sub_KO)
+
+# kable(DF_genes[1:5, 1:5])
+```
+
+|Org |Genes             |KO_Number |Rxn    |Metabolite            |
+|:---|:-----------------|:---------|:------|:---------------------|
+|hsa |79944(L2HGDH)     |K00109    |R09279 |4_hydroxybutyric_acid |
+|ptr |452898(L2HGDH)    |K00109    |R09279 |4_hydroxybutyric_acid |
+|pps |100978899(L2HGDH) |K00109    |R09279 |4_hydroxybutyric_acid |
+|ggo |101139276(L2HGDH) |K00109    |R09279 |4_hydroxybutyric_acid |
+|pon |100172827(L2HGDH) |K00109    |R09279 |4_hydroxybutyric_acid |
+
+すると`KO_Number`の前に`Org`と`Genes`が増えていると思います。`Org`がOrganismで生物で、ヒトやチンパンジーなどが最初に挙がっていますが、Bacteriaもあって、Species levelで分類されています。
+
+## OrgのうちProkaryoteのAssignmentを行う
+これも`assign_hierarchy()`を使用します。こっちは`identifier=:""`で制御できるのでわかりやすい。Orgの略号からPhylum、Genus、Speciesの情報を出力してくれます。Metabolomeのデータからどんな最近が寄与しているのかわかっていいですね。
+
+```r
+DF_genes_Prokaryotes <-
+  assign_hierarchy(count_data = DF_genes,
+                   keep_unknowns = FALSE,
+                   identifier = "Prokaryote")
+
+# kable(DF_genes_Prokaryotes[1:5,c(1,2,54:58)])
+```
+
+|Org  |Genes       |GeneOperon |Kingdom  |Phylum.Class.Family          |Genus             |Species.Strain.Serotype     |
+|:----|:-----------|:----------|:--------|:----------------------------|:-----------------|:---------------------------|
+|ala  |BFG52_03170 |L2HGDH     |Bacteria |Gammaproteobacteria - Others |Acinetobacter     |Acinetobacter larvae        |
+|spsw |Sps_02941   |L2HGDH     |Bacteria |Gammaproteobacteria - Others |Shewanella        |Shewanella psychrophila     |
+|com  |CMT41_07915 |L2HGDH     |Bacteria |Gammaproteobacteria - Others |Colwellia         |Colwellia sp. MT41          |
+|coz  |A3Q34_08255 |L2HGDH     |Bacteria |Gammaproteobacteria - Others |Colwellia         |Colwellia sp. PAMC 20917    |
+|pphe |PP2015_172  |L2HGDH     |Bacteria |Gammaproteobacteria - Others |Pseudoalteromonas |Pseudoalteromonas phenolica |
+
+あとはこれらの得られた情報を使っていろいろと解析をしていけばいいのだと思います。

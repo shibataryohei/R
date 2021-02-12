@@ -1,0 +1,13 @@
+library(pacman)
+install.packages("pacman")
+p_load(rmarkdown,knitr)#
+opts_chunk$set(echo=FALSE, cache=TRUE, message=FALSE,#
+               warning=FALSE, include=TRUE, fig.align="center")#
+#
+# Graphic#
+p_load(ggplot2,gridExtra,grid,plotrix,#
+       ggrepel,RColorBrewer, ggraptR, formattable)
+devtools::install_github("kazutan/tubeplayR")#
+#
+# 蓮沼執太リスト#
+tubeplayR::tubeplay("https://www.youtube.com/playlist?list=PLMS8nFFHUgcm04LMqSuq6JmeeyzQzN1Rm")
