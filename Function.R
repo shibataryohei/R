@@ -1,9 +1,9 @@
 # Check levels
-checklevels.R <-
+checklevels <-
   function(data){levels(as.factor(data$Variable))}
 
 # Convert data.frame to png
-tablepng.R <- 
+tablepng <- 
   function(data, file){
     tg = gridExtra::tableGrob(data, rows=NULL)
     h = grid::convertHeight(sum(tg$heights), "in", TRUE)
@@ -11,7 +11,7 @@ tablepng.R <-
     ggplot2::ggsave(paste(file,".png",sep=""),
                     tg, width=w, height=h, dpi=300)}
 
-tablepng2.R <- 
+tablepng2 <- 
   function(data, file){
     tg = gridExtra::tableGrob(data, rows=NULL)
     h = grid::convertHeight(sum(tg$heights), "in", TRUE)
@@ -19,8 +19,15 @@ tablepng2.R <-
     ggplot2::ggsave(paste0(file),
                     tg, width=w, height=h, dpi=300)}
 
+# Q.value
+q.value <- function(x){
+  qvalue::qvalue(x,
+                 lambd = seq(0, 0.95, 0.05),
+                 pi0 = 1,
+                 pi0.method = "bootstrap")$qvalue}
+
 # Add star
-addsd.R <-
+addsd <-
 function(Value){
   ifelse(Value < 0.001, paste("***"),
          ifelse(Value < 0.01,paste("**"),
@@ -44,7 +51,7 @@ export_formattable <- function(f, file, width,height,
 }
 
 # Test
-fisher.R <- function(a,b,c,d){
+fisher <- function(a,b,c,d){
   data <- matrix(c(a,b,c,d),ncol=2)
   c(p = fisher.test(data)$p.value,  # simulate.p.value=TRUE, B=1e4, workspace = 100000
     OR = fisher.test(data)$estimate,
