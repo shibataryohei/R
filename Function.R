@@ -1,6 +1,6 @@
 # Check levels
 checklevels <-
-  function(data){levels(as.factor(data$Variable))}
+  function(data, x){levels(droplevels(as.factor(data[[x]])))}
 
 # Convert data.frame to png
 tablepng <- 
@@ -33,7 +33,14 @@ function(Value){
          ifelse(Value < 0.01,paste("**"),
                 ifelse(Value < 0.05,paste("*"),
                        paste(""))))
-  }
+}
+
+# P.value
+arrange_pvalue <- function(Value){
+  if_else(Value < 0.001, paste("<0.001"),
+          if_else(Value < 0.1, sprintf(Value, fmt = "%.3f"),
+                  sprintf(Value, fmt = "%.2f")))}
+
 
 library("htmltools")
 library("webshot") 
@@ -94,3 +101,9 @@ ntf <- function(x){mailR::send.mail(from = "shibataryohei@gmail.com",
                                                 ssl = T),
                                     authenticate = TRUE,
                                     send = TRUE)}
+
+c2r <- function(data, x){as.data.frame(data) %>% 
+    tibble::column_to_rownames(., x)}
+
+r2c <- function(data, x){as.data.frame(data) %>% 
+    tibble::rownames_to_column(., x)}

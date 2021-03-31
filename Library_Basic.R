@@ -23,7 +23,7 @@ theme_update(panel.grid.major = element_blank(),
   
 
 # Data 
-p_load(readxl, forcats, magrittr) # readxl is included tidyverse but
+p_load(readxl, forcats, magrittr, pipeR) # readxl is included tidyverse but
 
 #  Stats
 p_load(lme4, exactRankTests, tableone, qvalue, rstatix)
