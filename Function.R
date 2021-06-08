@@ -1,8 +1,6 @@
-# Check levels
 checklevels <-
   function(data, x){levels(droplevels(as.factor(data[[x]])))}
 
-# Convert data.frame to png
 tablepng <- 
   function(data, file){
     tg = gridExtra::tableGrob(data, rows=NULL)
@@ -19,28 +17,11 @@ tablepng2 <-
     ggplot2::ggsave(paste0(file),
                     tg, width=w, height=h, dpi=300)}
 
-# Q.value
-q.value <- function(x){
-  qvalue::qvalue(x,
-                 lambd = seq(0, 0.95, 0.05),
-                 pi0 = 1,
-                 pi0.method = "bootstrap")$qvalue}
+c2r <- function(data, x){as.data.frame(data) %>% 
+    tibble::column_to_rownames(., x)}
 
-# Add star
-addsd <-
-function(Value){
-  ifelse(Value < 0.001, paste("***"),
-         ifelse(Value < 0.01,paste("**"),
-                ifelse(Value < 0.05,paste("*"),
-                       paste(""))))
-}
-
-# P.value
-arrange_pvalue <- function(Value){
-  if_else(Value < 0.001, paste("<0.001"),
-          if_else(Value < 0.1, sprintf(Value, fmt = "%.3f"),
-                  sprintf(Value, fmt = "%.2f")))}
-
+r2c <- function(data, x){as.data.frame(data) %>% 
+    tibble::rownames_to_column(., x)}
 
 library("htmltools")
 library("webshot") 
@@ -54,17 +35,34 @@ export_formattable <- function(f, file, width,height,
           file = file,
           selector = ".formattable_widget",
           delay = delay,
-          zoom = 10)
-}
+          zoom = 10)}
 
-# Test
+# Test #####
 fisher <- function(a,b,c,d){
   data <- matrix(c(a,b,c,d),ncol=2)
   c(p = fisher.test(data)$p.value,  # simulate.p.value=TRUE, B=1e4, workspace = 100000
     OR = fisher.test(data)$estimate,
     CI = fisher.test(data)$conf.int)}
 
+q.value <- function(x){
+  qvalue::qvalue(x,
+                 lambd = seq(0, 0.95, 0.05),
+                 pi0 = 1,
+                 pi0.method = "bootstrap")$qvalue}
 
+addsd <-
+  function(Value){
+    ifelse(Value < 0.001, paste("***"),
+           ifelse(Value < 0.01,paste("**"),
+                  ifelse(Value < 0.05,paste("*"),
+                         paste(""))))}
+
+arrange.pvalue <- function(Value){
+  if_else(Value < 0.001, paste("<0.001"),
+          if_else(Value < 0.1, sprintf(Value, fmt = "%.3f"),
+                  sprintf(Value, fmt = "%.2f")))}
+
+# Clinical #####
 # Pediatric eGFR
 # age = 0.1
 # ht = 0.8
@@ -89,6 +87,7 @@ pegfr <- function(cre, age, ht, sex){
                   -4.536*ht^5+27.16*ht^4-63.47*ht^3+72.43*ht^2-40.06*ht+8.778)
   110.2*R*r_cre/cre+2.93 }
 
+# Utility #####
 ntf <- function(x){mailR::send.mail(from = "shibataryohei@gmail.com",
                                     to = "shibataryohei@gmail.com",
                                     subject = "RStudio Notification",
@@ -102,8 +101,32 @@ ntf <- function(x){mailR::send.mail(from = "shibataryohei@gmail.com",
                                     authenticate = TRUE,
                                     send = TRUE)}
 
-c2r <- function(data, x){as.data.frame(data) %>% 
-    tibble::column_to_rownames(., x)}
 
-r2c <- function(data, x){as.data.frame(data) %>% 
-    tibble::rownames_to_column(., x)}
+
+# Correlation analysis #####
+
+associate2 <- function(df1, df2){
+  intersect(rownames(df1),
+            rownames(df2)) -> id
+  microbiome::associate(df1[id, , drop = FALSE],
+                        df2[id, , drop = FALSE],
+                        method = "spearman") %>% 
+    dplyr::rename(Q.value = p.adj)} 
+
+df.pheatmap <- function(tbw, X1, X2){
+  tbw %>% 
+    dplyr::select(-Q.value) %>% 
+    spread(X2, Correlation) %>% 
+    c2r("X1") -> correlation_df
+  
+  tbw %>% 
+    dplyr::select(-Correlation) %>% 
+    mutate(Q.value = addsd(Q.value)) %>% 
+    spread(X2, Q.value) %>% 
+    c2r("X1") -> sd_df
+  
+  max(abs(correlation_df)) -> range
+  
+  list(cor = correlation_df,
+       sd = sd_df,
+       range = range)}
