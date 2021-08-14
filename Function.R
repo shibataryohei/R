@@ -21,7 +21,10 @@ c2r <- function(data, x){as.data.frame(data) %>%
     tibble::column_to_rownames(., x)}
 
 r2c <- function(data, x){as.data.frame(data) %>% 
-    tibble::rownames_to_column(., x)}
+    tibble::rownames_to_column(., x) }
+
+c2f <- function(data){data %>% 
+    mutate_if(is.character, funs(as.factor(.)))}
 
 library("htmltools")
 library("webshot") 

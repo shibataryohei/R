@@ -28,3 +28,6 @@ p_load(readxl, forcats, magrittr, pipeR) # readxl is included tidyverse but
 #  Stats
 p_load(lme4, exactRankTests, tableone, qvalue, rstatix)
 
+# Others
+library(glue)
+
