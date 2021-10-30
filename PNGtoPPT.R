@@ -1,6 +1,6 @@
 library(tidyverse)
 
-PATH <- "210427_JSPS2" # PNGファイルのディレクトリ
+PATH <- "211021_PSJM" # PNGファイルのディレクトリ
 
 # 
 setwd(PATH) 

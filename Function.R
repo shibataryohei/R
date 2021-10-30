@@ -1,3 +1,6 @@
+digit <- 
+  function(x, i){sprintf(paste0("%.", i, "f"), x)}
+
 checklevels <-
   function(data, x){levels(droplevels(as.factor(data[[x]])))}
 
@@ -133,3 +136,39 @@ df.pheatmap <- function(tbw, X1, X2){
   list(cor = correlation_df,
        sd = sd_df,
        range = range)}
+
+# Omics
+
+omit_rare <- function(df, var, id, ratio){
+  names(df)[names(df) == var] <- "variable"
+  names(df)[names(df) == id] <- "id"
+  
+  df %>% 
+    group_by(id) %>% 
+    dplyr::summarise() %>% 
+    nrow -> id_number
+  
+  df %>% 
+    filter(Value == 0) %>% 
+    group_by(variable) %>% 
+    dplyr::summarise(Count= n()) %>% 
+    filter(Count > id_number*(1-ratio)) %>% 
+    .$variable -> variable_omit
+  
+  df %>% 
+    ungroup %>% 
+    filter(!variable %in% variable_omit) -> df2
+  
+  names(df2)[names(df2) == "variable"] <- var
+  names(df2)[names(df2) == "id"] <- id
+  
+  df2}
+
+arrange_rstatix <- function(df){
+  df %>% 
+    tbl_df %>% 
+    dplyr::select(Variable, p) %>% 
+    dplyr::rename(P.value = p) %>% 
+    mutate(Q.value = q.value(P.value)) %>% 
+    arrange(P.value)
+}
