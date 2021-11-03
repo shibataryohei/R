@@ -74,4 +74,28 @@ Data_tbw %>%
                group_by(Group) %>% 
                dplyr::summarise(Follow_PersonYear = sum(Follow))) %>% 
   mutate(`Case/PersonYear` = Count/Follow_PersonYear)
-  
+
+Data_tbw %>% 
+  dplyr::select(性別, 嚢胞性二分脊椎, 移動,
+                  手術時年齢, BMI, 利用臓器, Flap, 導尿口部位, 膀胱他操作,
+                  導尿困難) %>% 
+  mutate(手術時年齢 = if_else(手術時年齢 > 12,
+                              "12歳以上", "12歳以下")) %>% 
+  mutate(BMI = if_else(BMI > 28,
+                              "28以上", "28以下")) %>% 
+  gather(変数, 因子, -導尿困難) %>% 
+  group_by(変数, 因子, 導尿困難) %>% 
+  dplyr::summarise(Count = n()) %>% 
+  spread(導尿困難, Count) %>% 
+  ungroup %>% 
+  mutate(導尿困難あり = ifelse(is.na(導尿困難あり), 0, 導尿困難あり)) %>% 
+  mutate(導尿困難なし = ifelse(is.na(導尿困難なし), 0, 導尿困難なし)) %>% 
+  mutate(Total = 導尿困難あり+導尿困難なし) %>% 
+  mutate(Ratio = 導尿困難あり/Total*100) %>% 
+  mutate(Ratio = sprintf(Ratio, fmt = "%#.1f")) %>% 
+  mutate(`導尿困難/合計` = paste0(導尿困難あり, "/", Total,
+                                  " (", Ratio, ")")) %>% 
+  dplyr::select(変数, 因子, `導尿困難/合計`)
+
+table(c(3,2,1,6))
+fisher_test()
