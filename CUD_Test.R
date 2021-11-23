@@ -15,7 +15,7 @@ read_excel("/Users/shibataryohei/Dropbox/Database/CUD/ACHMC_Mitrofanoff_Monti.xl
                              "導尿困難あり" = "あり",
                              "導尿困難なし" = "なし")) %>% 
   mutate(性別 = fct_relevel(性別, "女性"),
-         脊髄異常 = fct_relevel(脊髄異常, "あり"),
+           高度脊髄異常 = fct_relevel(高度脊髄異常, "あり"),
          移動 = fct_relevel(移動, "車椅子"),
          Flap = fct_relevel(Flap, "VR"))   -> Data_tbw
 
@@ -74,4 +74,36 @@ Data_tbw %>%
                group_by(Group) %>% 
                dplyr::summarise(Follow_PersonYear = sum(Follow))) %>% 
   mutate(`Case/PersonYear` = Count/Follow_PersonYear)
-  
+
+Data_tbw %>% 
+  dplyr::select(性別, 高度脊髄異常, 移動,
+                  手術時年齢, BMI, 利用臓器, Flap, 導尿口部位, 膀胱他操作,
+                  導尿困難) %>% 
+  mutate(手術時年齢 = if_else(手術時年齢 > 12,
+                              "12歳以上", "12歳以下")) %>% 
+  mutate(BMI = if_else(BMI > 28,
+                              "28以上", "28以下")) %>% 
+  gather(変数, 因子, -導尿困難) %>% 
+  mutate(変数 = fct_relevel(変数,
+                            "高度脊髄異常",
+                            "性別", "移動", "手術時年齢",
+                            "BMI", "膀胱他操作",
+                            "利用臓器", "導尿口部位",
+                            "Flap")) %>% 
+  group_by(変数, 因子, 導尿困難) %>% 
+  dplyr::summarise(Count = n()) %>% 
+  spread(導尿困難, Count) %>% 
+  ungroup %>% 
+  mutate(導尿困難あり = ifelse(is.na(導尿困難あり), 0, 導尿困難あり)) %>% 
+  mutate(導尿困難なし = ifelse(is.na(導尿困難なし), 0, 導尿困難なし)) %>% 
+  mutate(Total = 導尿困難あり+導尿困難なし) %>% 
+  mutate(Ratio = 導尿困難あり/Total*100) %>% 
+  mutate(Ratio = sprintf(Ratio, fmt = "%#.1f")) %>% 
+  mutate(`導尿困難/合計` = paste0(導尿困難あり, "/", Total,
+                                  " (", Ratio, ")")) %>% 
+  dplyr::select(変数, 因子, `導尿困難/合計`) %>% 
+  sjPlot::tab_df(.,
+                 file = "CUD/Table_Exposure.doc")
+
+table(c(3,2,1,6))
+
