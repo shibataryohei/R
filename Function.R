@@ -6,7 +6,7 @@ checklevels <-
 
 tablepng <- 
   function(data, file){
-    tg = gridExtra::tableGrob(data, rows=NULL)
+    tg = gridExtra::tableGrob(data, rows = NULL)
     h = grid::convertHeight(sum(tg$heights), "in", TRUE)
     w = grid::convertWidth(sum(tg$widths), "in", TRUE)
     ggplot2::ggsave(paste(file,".png",sep=""),
@@ -18,7 +18,7 @@ tablepng2 <-
     h = grid::convertHeight(sum(tg$heights), "in", TRUE)
     w = grid::convertWidth(sum(tg$widths), "in", TRUE)
     ggplot2::ggsave(paste0(file),
-                    tg, width=w, height=h, dpi=300)}
+                    tg, width = w, height = h, dpi = 300)}
 
 c2r <- function(data, x){as.data.frame(data) %>% 
     tibble::column_to_rownames(., x)}
