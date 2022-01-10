@@ -23,10 +23,14 @@ Statistics <-
 Knit <- c("bindrcpp", "carData", "car", "sandwich", "RcmdrMisc", "effects",
           "Rcmdr")
 
-Packages <- c(Document, Graphic, Data, Statistics, Knit)
+Packages <- c(Document,
+              Graphic,
+              Data,
+              Statistics,
+              Knit)
+
 install.packages(Packages)
 
-install.pa
 
 # devtools
 install.packages("devtools")
@@ -45,6 +49,6 @@ library(phyloseq)
 install.packages("webshot")
 
 # Add-hoc
-install.packages("devtools")
+#install.packages("devtools")
 devtools::install_github("erhard-lab/lfc")
 library(lfc)
