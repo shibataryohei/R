@@ -61,13 +61,3 @@ lefse_add_taxonomy <- function(x){
                                   "Family", "Genus", "Species")) %>% 
     dplyr::select(-Levels)
 }
-
-
-
-%>% 
-  filter(Taxonomy == "Genus") %>% 
-  mutate(Variable = gsub(".*\\|.*\\|.*\\|.*\\|", "", Variable)) %>% 
-  dplyr::select(-Levels, -Taxonomy) %>% 
-  mutate(adj.LDA = as.numeric(as.character(adj.LDA))) %>% 
-  mutate(Variable = fct_reorder(Variable, adj.LDA)) %>% 
-  mutate(Age = fct_relevel_age(Age)) -> Genus_RES_Delivery_tbl

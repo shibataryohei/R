@@ -42,6 +42,7 @@ install.packages('BiocManager')
 BiocManager::install("GenomeInfoDb")
 BiocManager::install("Rhdf5lib")
 BiocManager::install("phyloseq")
+BiocManager::install("WGCNA")
 
 library(phyloseq)
 
