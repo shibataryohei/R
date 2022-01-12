@@ -7,7 +7,10 @@ associate.pheatmap <- function(df1, df2){
             rownames(df2)) -> mutualid
   
   microbiome::associate(df1[mutualid,],
-                        df2[mutualid, ]) %>% 
+                        df2[mutualid, ],
+                        method = "spearman",
+                        p.adj.method = "fdr",
+                        p.adj.threshold = 0.05) %>% 
     as.tibble %>% 
     dplyr::rename(Q.value = p.adj) -> associate_tbw
   
@@ -24,6 +27,6 @@ associate.pheatmap <- function(df1, df2){
   
   stars_df[is.na(stars_df)] <- " "
   
-  list(associate_tbw,
-       correlation_df,
-       stars_df)}
+  list(associate_tbw = associate_tbw,
+       correlation_df = correlation_df,
+       stars_df = stars_df)}
