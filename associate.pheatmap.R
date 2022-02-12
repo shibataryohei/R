@@ -6,8 +6,8 @@ associate.pheatmap <- function(df1, df2){
   intersect(rownames(df1),
             rownames(df2)) -> mutualid
   
-  microbiome::associate(df1[mutualid,],
-                        df2[mutualid, ],
+  microbiome::associate(df1[mutualid, , drop = FALSE ],
+                        df2[mutualid, , drop = FALSE],
                         method = "spearman",
                         p.adj.method = "fdr",
                         p.adj.threshold = 0.05) %>% 
