@@ -1,5 +1,5 @@
 # filter_taxa
-filter_taxa <- function(tbl,
+filter_mb <- function(tbl,
                         rate){
 tbl %>% 
   checklevels("Variable") %>% 
