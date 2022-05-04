@@ -6,14 +6,6 @@ checklevels <-
 
 tablepng <- 
   function(data, file){
-    tg = gridExtra::tableGrob(data, rows = NULL)
-    h = grid::convertHeight(sum(tg$heights), "in", TRUE)
-    w = grid::convertWidth(sum(tg$widths), "in", TRUE)
-    ggplot2::ggsave(paste(file,".png",sep=""),
-                    tg, width=w, height=h, dpi=300)}
-
-tablepng2 <- 
-  function(data, file){
     tg = gridExtra::tableGrob(data, rows=NULL)
     h = grid::convertHeight(sum(tg$heights), "in", TRUE)
     w = grid::convertWidth(sum(tg$widths), "in", TRUE)
@@ -139,7 +131,7 @@ df.pheatmap <- function(tbw, X1, X2){
 
 # Omics
 
-omit_rare <- function(df, var, id, ratio){
+omit.rare <- function(df, var, id, ratio){
   names(df)[names(df) == var] <- "variable"
   names(df)[names(df) == id] <- "id"
   

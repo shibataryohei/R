@@ -18,7 +18,8 @@ Data <-
 
 Statistics <-
   c("lme4", "exactRankTests", "tableone", "qvalue",
-    "rstatix", "qvalue", "sjPlot", "survival", "randomForest")
+    "rstatix", "qvalue", "sjPlot", "survival", "randomForest",
+    "broom", "broom.mixed")
 
 Knit <- c("bindrcpp", "carData", "car", "sandwich", "RcmdrMisc", "effects",
           "Rcmdr")
