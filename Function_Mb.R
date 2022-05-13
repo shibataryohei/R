@@ -1,8 +1,7 @@
-# filter_taxa
 filter_mb <- function(tbl,
                         rate){
 tbl %>% 
-  checklevels("Variable") %>% 
+  check_levels("Variable") %>% 
   .[1] -> factor
 
 tbl %>% 
@@ -14,14 +13,11 @@ tbl %>%
   group_by(Variable) %>% 
   dplyr::summarise(Count = n()) %>% 
   filter(Count > n * (rate)) %>% 
-  checklevels("Variable") -> include_variable
+  check_levels("Variable") -> include_variable
 
 tbl %>% 
   filter(Variable %in% include_variable)}
 
-
-
-# filter_taxa
 filter_metabolite <- function(tbl,
                         threshold,
                         rate){
@@ -38,12 +34,10 @@ filter_metabolite <- function(tbl,
     group_by(Variable) %>% 
     dplyr::summarise(Count = n()) %>% 
     filter(Count > n * (rate)) %>% 
-    checklevels("Variable") -> include_variable
+    check_levels("Variable") -> include_variable
   
   tbl %>% 
     filter(Variable %in% include_variable)}
-
-
 
 lefse_add_taxonomy <- function(x){
   data.frame(Taxonomy = as.factor(c("Phylum", "Class", "Order", 
